@@ -98,29 +98,200 @@ job-market-data-pipeline/
 ### `db_connection.py`
 - Centralized database connection handler  
 - Prevents duplicated connection logic  
-- Implements safe connection opening and closing  
+- Implements safe connection opening and closing
+
+```bash
+import psycopg2
+from db_config import DB_CONFIG
+
+def get_connection():
+    try:
+        conn = psycopg2.connect(**DB_CONFIG)
+        print("✅ Connected to PostgreSQL (sql_course)")
+        return conn
+    except Exception as e:
+        print("❌ Failed to connect to PostgreSQL")
+        print(e)
+        return None
+
+``` 
+
+------
 
 ### `run_queries.py`
 - Reads all SQL files from a directory  
 - Executes them programmatically  
 - Prints row counts and sample results  
-- Acts as the orchestration layer  
+- Acts as the orchestration layer
+
+```bash
+import os
+from db_connection import get_connection
+
+SQL_FOLDER = "../project_sql"
+
+def read_sql_file(filepath):
+    with open(filepath, "r") as file:
+        return file.read()
+
+def run_query(sql_query):
+    conn = get_connection()
+    if not conn:
+        return None
+
+    try:
+        cur = conn.cursor()
+        cur.execute(sql_query)
+        rows = cur.fetchall()
+        return rows
+    except Exception as e:
+        print("❌ Query failed:")
+        print(e)
+        return None
+    finally:
+        conn.close()
+
+def main():
+    sql_files = sorted([
+        f for f in os.listdir(SQL_FOLDER)
+        if f.endswith(".sql")
+    ])
+
+    for file in sql_files:
+        print("\n" + "="*60)
+        print(f"▶ Running query: {file}")
+        print("="*60)
+
+        sql_path = os.path.join(SQL_FOLDER, file)
+        query = read_sql_file(sql_path)
+        results = run_query(query)
+
+        if results:
+            print(f"✅ Rows returned: {len(results)}")
+            print("🔹 Sample rows:")
+            for row in results[:5]:
+                print(row)
+        else:
+            print("⚠️ No results or query failed")
+
+if __name__ == "__main__":
+    main()
+
+```
+
+-----
 
 ### `export_to_csv.py`
 - Extends query execution  
 - Extracts column names automatically  
-- Saves structured CSV outputs for analysis  
+- Saves structured CSV outputs for analysis
+
+```bash
+import os
+import csv
+from db_connection import get_connection
+
+SQL_FOLDER = "../project_sql"
+OUTPUT_FOLDER = "../csv_files"
+
+os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+
+def read_sql_file(filepath):
+    with open(filepath, "r") as file:
+        return file.read()
+
+def run_query_with_columns(sql_query):
+    conn = get_connection()
+    if not conn:
+        return None, None
+
+    try:
+        cur = conn.cursor()
+        cur.execute(sql_query)
+        rows = cur.fetchall()
+        columns = [desc[0] for desc in cur.description]
+        return columns, rows
+    except Exception as e:
+        print("❌ Query failed:")
+        print(e)
+        return None, None
+    finally:
+        conn.close()
+
+def export_csv(filename, columns, rows):
+    path = os.path.join(OUTPUT_FOLDER, filename)
+
+    with open(path, "w", newline="") as file:
+        writer = csv.writer(file)
+        writer.writerow(columns)
+        writer.writerows(rows)
+
+    print(f"📁 Exported: {path}")
+
+def main():
+    sql_files = sorted([
+        f for f in os.listdir(SQL_FOLDER)
+        if f.endswith(".sql")
+    ])
+
+    for file in sql_files:
+        print(f"\n▶ Processing {file}")
+        sql_path = os.path.join(SQL_FOLDER, file)
+        query = read_sql_file(sql_path)
+
+        columns, rows = run_query_with_columns(query)
+
+        if rows:
+            csv_name = file.replace(".sql", ".csv")
+            export_csv(csv_name, columns, rows)
+        else:
+            print("⚠️ No data to export")
+
+if __name__ == "__main__":
+    main()
+
+```
+
+------
 
 ### `test_connection.py`
 - Lightweight sanity check  
 - Confirms PostgreSQL connectivity before running the pipeline  
+
+```bash
+from db_connection import get_connection
+
+print("🚀 Starting connection test")
+
+conn = get_connection()
+
+if conn:
+    conn.close()
+    print("🔌 Connection closed successfully")
+
+```
+
+------
 
 ### `analyze_results.py`
 - Placeholder for future transformations  
 - Intended for:
   - Pandas analysis  
   - Feature engineering  
-  - Business metrics computation  
+  - Business metrics computation
+ 
+```bash
+"""
+analyze_results.py
+
+This module is reserved for future data analysis and transformations.
+Possible extensions:
+- Aggregations using pandas
+- Business KPIs computation
+- Feature engineering for downstream analytics or ML
+"""
+
+```
 
 ---
 
@@ -188,4 +359,5 @@ This pipeline can be adapted for:
 - Logging instead of print statements  
 - Scheduling with Airflow or cron  
 - Dockerization for deployment  
+
 
