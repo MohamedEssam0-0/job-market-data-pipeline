@@ -58,17 +58,19 @@ Structured Outputs (CSV)
 
 ## 📂 Project Structure
 
+```text
 job-market-data-pipeline/
 ├── python/
-│ ├── db_config.py # Database configuration (local only)
-│ ├── db_connection.py # Reusable PostgreSQL connection logic
-│ ├── run_queries.py # Executes SQL files dynamically
-│ ├── export_to_csv.py # Exports query results to CSV
-│ ├── test_connection.py # Connection sanity check
-│ └── analyze_results.py # Reserved for future transformations
+│   ├── db_config.py           # Database configuration (local only)
+│   ├── db_connection.py       # Reusable PostgreSQL connection logic
+│   ├── run_queries.py         # Executes SQL files dynamically
+│   ├── export_to_csv.py       # Exports query results to CSV
+│   ├── test_connection.py     # Connection sanity check
+│   └── analyze_results.py     # Reserved for future transformations
 │
 ├── README.md
 └── .gitignore
+```
 
 ---
 
@@ -359,5 +361,6 @@ This pipeline can be adapted for:
 - Logging instead of print statements  
 - Scheduling with Airflow or cron  
 - Dockerization for deployment  
+
 
 
